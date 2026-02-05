@@ -278,14 +278,32 @@
       growYes();
     }
 
-    zone.addEventListener("pointermove", e => {
+    function isNearNo(clientX, clientY) {
       const b = noBtn.getBoundingClientRect();
-      const d = Math.hypot(
-        (b.left + b.width / 2) - e.clientX,
-        (b.top + b.height / 2) - e.clientY
-      );
-      if (d < 140) moveNo(e.clientX, e.clientY);
-    });
+      return Math.hypot(
+        (b.left + b.width / 2) - clientX,
+        (b.top + b.height / 2) - clientY
+      ) < 140;
+    }
+
+    function handleNearNo(clientX, clientY) {
+      if (isNearNo(clientX, clientY)) moveNo(clientX, clientY);
+    }
+
+    // Mouse / pen: move near the button to make it run
+    zone.addEventListener("pointermove", e => handleNearNo(e.clientX, e.clientY));
+
+    // Mobile: touch or pointer down near the button moves it immediately (no move event on tap)
+    zone.addEventListener("pointerdown", e => handleNearNo(e.clientX, e.clientY));
+
+    // Mobile: touchmove so dragging a finger toward the button makes it run (reliable on all devices)
+    zone.addEventListener("touchmove", e => {
+      if (e.changedTouches.length) {
+        const t = e.changedTouches[0];
+        handleNearNo(t.clientX, t.clientY);
+        if (isNearNo(t.clientX, t.clientY)) e.preventDefault();
+      }
+    }, { passive: false });
 
     noBtn.addEventListener("click", e => e.preventDefault());
 
